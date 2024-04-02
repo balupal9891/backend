@@ -9,7 +9,8 @@ import { loginUser,
         updateUserAvatar, 
         updateUsercoverImage, 
         getUserChannelProfile, 
-        getWatchHistory 
+        getWatchHistory, 
+        subscribeChannel
     } from "../controller/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import { verifyUser } from "../middlewares/auth.middleware.js";
@@ -42,6 +43,7 @@ router.route("/avatar").patch(verifyUser, upload.single("avatar"), updateUserAva
 router.route("/cover-image").patch(verifyUser, upload.single("coverImage"), updateUsercoverImage)
 router.route("/c/:username").get(verifyUser, getUserChannelProfile)
 router.route("/history").get(verifyUser, getWatchHistory)
+router.route("/subscribe/:username").post(verifyUser, subscribeChannel)
 
 
 export default router

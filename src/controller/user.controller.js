@@ -4,6 +4,7 @@ import {User} from  "../models/users.model.js"
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import jwt from 'jsonwebtoken';
+import { Subscription } from '../models/subscription.model.js';
 
 
 
@@ -347,15 +348,23 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
             $lookup: {
                 from: "subscriptions",
                 localField: "_id",
-                foriegnField: "channel",
-                as: "subscribers"
+                foreignField: "channel",
+                as: "subscribers",
+                // pipeline: [
+                //     {
+                //         $project: {
+                //             subscriber:1,
+                //             _id:0
+                //         }
+                //     }
+                // ]
             }
         },
         {
             $lookup: {
                 from: "subscriptions",
                 localField: "_id",
-                foriegnField: "subscriber",
+                foreignField: "subscriber",
                 as: "subscribedTo"
             }
         },
@@ -369,7 +378,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
                 },
                 isSubscribed: {
                     $cond: {
-                        if: {$in: [req.user?._id, "$subscribers"]},
+                        if: {$in: [req.user?._id, "$subscribers.subscriber"]},
                         then: true,
                         else: false
                     }
@@ -385,7 +394,8 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
                 isSubscribed: 1,
                 avatar: 1,
                 coverImage: 1,
-                email: email
+                email: 1,
+                subscribers: 1
             }
         }
     ])
@@ -457,6 +467,57 @@ const getWatchHistory = asyncHandler(async (req, res) => {
 
 })
 
+
+const subscribeChannel = asyncHandler(async (req, res) => {
+    const username = req.params?.username
+    if(!username?.trim()){
+        throw new ApiError(401, "Provide a channel")
+    }
+
+    const channel = await User.aggregate([
+        {
+            $match: {
+                username: username?.toLowerCase()
+            }
+        },
+        {
+            $project: {
+                username: 1,
+                _id:1
+            }
+        }
+    ])
+    if(!channel || !Array.isArray(channel) || !(channel.length > 0)){
+        throw new ApiError(400, "User not found to which you want to subscribe")
+    }
+
+    const isSubscribed = await Subscription.findOne({
+        $and: [
+            {channel: channel[0]?._id},
+            {subscriber: req.user?._id}
+        ]
+    })
+    if(isSubscribed){
+        throw new ApiError(409, "Already subscribed")
+    }
+
+    const subscribed = await Subscription.create({
+        channel: channel[0]._id,
+        subscriber: req.user?._id
+    })
+    if(!subscribed){
+        throw new ApiError(501, "Database error : Error in Creating subscription schema")
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(201, {}, "successfully channel subscribed")
+    )
+
+
+})
+
 export {
     registerUser,
     loginUser,
@@ -468,5 +529,6 @@ export {
     updateUserAvatar,
     updateUsercoverImage,
     getUserChannelProfile,
-    getWatchHistory
+    getWatchHistory,
+    subscribeChannel
 }

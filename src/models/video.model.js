@@ -28,10 +28,6 @@ const videoSchema = new Schema(
             type: Number,
             default: 0
         },
-        views: {
-            type: Number,
-            default: 0
-        },
         isPublished: {
             type: Boolean,
             defaulet: true
@@ -40,8 +36,6 @@ const videoSchema = new Schema(
             type: Schema.Types.ObjectId,
             ref: "User"
         }
-
-
     },
     {
         timestamps: true
