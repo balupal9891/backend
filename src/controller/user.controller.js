@@ -67,7 +67,9 @@ const registerUser = asyncHandler( async (req, res) => {
         password,
         username: username.toLowerCase()
     })
+    // console.log(user)
     const createdUser = await User.findById(user._id).select("-password -refreshToken")
+    // console.log(createdUser)
     if(!createdUser){
         throw new ApiError(500, "Something went wrong while registering the user")
     }
@@ -438,7 +440,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
                                     $project: {
                                         fullname: 1,
                                         username: 1,
-                                        abatar: 1
+                                        avatar: 1
                                     }
                                 }
                             ]
