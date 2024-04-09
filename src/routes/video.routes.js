@@ -6,7 +6,7 @@ import {
     publishAVideo,
     togglePublishStatus,
     updateVideo,
-} from "../controllers/video.controller.js"
+} from "../controller/video.controller.js"
 import {verifyUser} from "../middlewares/auth.middleware.js"
 import {upload} from "../middlewares/multer.middleware.js"
 
@@ -16,7 +16,8 @@ router.use(verifyUser); // Apply verifyUser middleware to all routes in this fil
 router
     .route("/")
     .get(getAllVideos)
-    .post(
+
+router.route("/upload-video").post(
         upload.fields([
             {
                 name: "videoFile",
@@ -35,7 +36,7 @@ router
     .route("/:videoId")
     .get(getVideoById)
     .delete(deleteVideo)
-    .patch(upload.single("thumbnail"), updateVideo);
+    .patch(upload.single("thumbnail"),updateVideo);
 
 router.route("/toggle/publish/:videoId").patch(togglePublishStatus);
 

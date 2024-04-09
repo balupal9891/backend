@@ -1,7 +1,7 @@
 import {asyncHandler} from '../utils/asyncHandler.js';
 import {ApiError} from "../utils/ApiError.js"
 import {User} from  "../models/users.model.js"
-import {uploadOnCloudinary} from "../utils/cloudinary.js"
+import {uploadOnCloudinary, deleteOnCloudinary} from "../utils/cloudinary.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import jwt from 'jsonwebtoken';
 import { Subscription } from '../models/subscription.model.js';
@@ -131,8 +131,8 @@ const logoutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set: {
-                refreshToken: undefined
+            $unset: {
+                refreshToken: 1
             }
         },
         {
@@ -275,9 +275,19 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Avatar file is missing")
     }
 
-    const avatar = uploadOnCloudinary(avatarLocalPath)
-    if(!avatar.url){
+    const avatar = await uploadOnCloudinary(avatarLocalPath)
+    if(!avatar?.url){
         throw new ApiError(501, "Error while uploading on avatar")
+    }
+
+    const avatarObj = await User.findById(req.user?._id).select("avatar")
+    let url = String(avatarObj.avatar)
+    url = url.substring(url.lastIndexOf("/")+1);
+    let publicId = url.substring(0, url.lastIndexOf("."));
+
+    let deleteAvatarOnCloud = await deleteOnCloudinary(publicId)
+    if(deleteAvatarOnCloud){
+        console.log("Avatar deleted on Cloud")
     }
 
     const user = await User.findByIdAndUpdate(
@@ -304,19 +314,29 @@ const updateUsercoverImage = asyncHandler(async (req, res) => {
 
     const coverImageLocalPath = req.file?.path
     if(!coverImageLocalPath){
-        throw new ApiError(401, "Avatar file is missing")
+        throw new ApiError(401, "coverImage file is missing")
     }
 
-    const avatar = uploadOnCloudinary(coverImageLocalPath)
-    if(!avatar.url){
-        throw new ApiError(501, "Error while uploading on avatar")
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+    if(!coverImage?.url){
+        throw new ApiError(501, "Error while uploading on coverImage")
+    }
+
+    const coverImageObj = await User.findById(req.user?._id).select("coverImage")
+    let url = String(coverImageObj.coverImage)
+    url = url.substring(url.lastIndexOf("/")+1);
+    let publicId = url.substring(0, url.lastIndexOf("."));
+
+    let deleteCoverOnCloud = await deleteOnCloudinary(publicId)
+    if(deleteCoverOnCloud){
+        console.log("coverImage deleted on Cloud")
     }
 
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
-                avatar: avatar?.url
+                coverImage: coverImage?.url
             }
         },
         {

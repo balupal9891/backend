@@ -16,18 +16,36 @@ const uploadOnCloudinary = async (localFilePath) => {
         const response = await cloudinary.uploader.upload(localFilePath, {
             resource_type: "auto"
         })
-        // console.log("file is uploaded on cloudinary", response);
+        // console.log(response)
         fs.unlinkSync(localFilePath)
         return response;
-    } 
+    }
     catch (error){
             fs.unlinkSync(localFilePath) // remove the locally saved temporary file as the upload operation got failed 
             return null;
     }
 }
 
+const deleteOnCloudinary = async (url, type = null) => {
 
-export {uploadOnCloudinary}
+    let temp = String(url);
+    temp = temp.substring(temp.lastIndexOf("/")+1);
+    let publicId = temp.substring(0, temp.lastIndexOf("."));
+    // console.log(publicId)
+    if(type == "video"){
+        const response = await cloudinary.uploader.destroy(publicId, {resource_type: 'video'}) 
+        return response;
+    }
+    else{
+        const response = await cloudinary.uploader.destroy(publicId)
+        return response;
+    }
+    // console.log(response)
+}
+
+
+
+export {uploadOnCloudinary, deleteOnCloudinary}
 
 
 // cloudinary.uploader.upload("https://upload.wikimedia.org/wikipedia/commons/a/ae/Olympic_flag.jpg",

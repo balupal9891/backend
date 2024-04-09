@@ -30,7 +30,7 @@ const videoSchema = new Schema(
         },
         isPublished: {
             type: Boolean,
-            defaulet: true
+            default: true
         },
         owner: {
             type: Schema.Types.ObjectId,
@@ -41,6 +41,8 @@ const videoSchema = new Schema(
         timestamps: true
     }
 )
+
+// videoSchema.methods.togglePublished()
 
 
 videoSchema.plugin(mongooseAggregatePaginate)
